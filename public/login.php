@@ -52,8 +52,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     <main>
         <section class="card login">
-            <h2>Login Pemilih</h2>
-            <p class="muted">Masukkan akun yang diberikan panitia.</p>
+            <h2 class="title">Login Pemilih</h2>
+            <p class="muted sub-title">Masukkan akun yang diberikan panitia.</p>
             
             <?php if ($error): ?>
                 <div class="error"><?= h($error) ?></div>

@@ -1,0 +1,19 @@
+#AuthType Basic
+#AuthName "Restricted Content"
+#AuthUserFile /etc/apache2/.htpasswd
+#Require valid-user
+
+
+# Mengaktifkan mod_rewrite
+RewriteEngine on 
+
+# Jika file tidak ditemukan sebagai direktori
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Jika file HTML ada, gunakan file HTML
+RewriteCond %{REQUEST_FILENAME}\.html -f
+RewriteRule ^(.*)$ $1.html [NC,L]
+
+# Jika file PHP ada, gunakan file PHP
+RewriteCond %{REQUEST_FILENAME}\.php -f
+RewriteRule ^(.*)$ $1.php [NC,L]

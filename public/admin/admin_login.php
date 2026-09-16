@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     <main>
         <section class="card login">
-            <h2>Login Panitia</h2>
+            <h2 class="title">Login Panitia</h2>
             
             <?php if ($error): ?>
                 <div class="error"><?= h($error) ?></div>

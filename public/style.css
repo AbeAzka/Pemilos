@@ -17,6 +17,10 @@ h2 {
     margin-top: 0;
 }
 
+.title, .sub-title {
+    text-align: center;
+}
+
 a {
     color: #1769e0;
     text-decoration: none;
