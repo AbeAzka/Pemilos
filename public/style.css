@@ -1,0 +1,499 @@
+/* ==========================================
+   1. GLOBAL & BASE STYLES
+   ================================---------- */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f3f6fb;
+    color: #172033;
+}
+
+h1,
+h2 {
+    margin-top: 0;
+}
+
+a {
+    color: #1769e0;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* ==========================================
+   2. LAYOUT & STRUCTURE
+   ================================---------- */
+header {
+    background: #123b73;
+    color: #fff;
+    padding: 16px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.brand {
+    font-size: 19px;
+    font-weight: 800;
+}
+
+.sub {
+    font-size: 12px;
+    opacity: .8;
+}
+
+main {
+    max-width: 1050px;
+    margin: 28px auto;
+    padding: 0 18px;
+}
+
+/* ==========================================
+   3. CARDS & CONTAINERS
+   ================================---------- */
+.card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 8px 28px rgba(20, 50, 90, .08);
+    margin-bottom: 18px;
+}
+
+.login {
+    max-width: 430px;
+    margin: 70px auto;
+}
+
+/* ==========================================
+   4. FORMS, INPUTS & BUTTONS
+   ================================---------- */
+label {
+    font-weight: 700;
+    font-size: 14px;
+    display: block;
+    margin-top: 10px;
+}
+
+input,
+button,
+select {
+    width: 100%;
+    padding: 12px 13px;
+    border-radius: 10px;
+    font-size: 15px;
+}
+
+input,
+select {
+    border: 1px solid #ccd4e0;
+    margin: 7px 0 15px;
+}
+
+button {
+    border: 0;
+    background: #1769e0;
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #1356bc;
+}
+
+button.secondary {
+    background: #e9eef7;
+    color: #17365f;
+}
+
+button.secondary:hover {
+    background: #d8e2f0;
+}
+
+/* --- Password Eye Icon Wrapper --- */
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 40px;
+    margin-bottom: 0;
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+    color: #666;
+    width: auto;
+}
+
+.password-toggle-btn:hover {
+    color: #333;
+    background: none;
+}
+
+/* ==========================================
+   5. ALERTS & NOTIFICATIONS
+   ================================---------- */
+.error {
+    background: #fff0f0;
+    color: #a51d2d;
+    padding: 11px;
+    border-radius: 9px;
+    margin-bottom: 14px;
+}
+
+.success {
+    background: #edf9f0;
+    color: #176b37;
+    padding: 11px;
+    border-radius: 9px;
+    margin-bottom: 14px;
+}
+
+.muted {
+    color: #667085;
+}
+
+/* ==========================================
+   6. GRID, STATS & COMPONENTS
+   ================================---------- */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.candidate {
+    border: 2px solid #e1e7f0;
+    border-radius: 14px;
+    padding: 14px;
+    cursor: pointer;
+}
+
+.candidate.selected {
+    border-color: #1769e0;
+    background: #eef5ff;
+}
+
+.candidate img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 10px;
+    background: #dfe7f2;
+}
+
+.num {
+    font-size: 13px;
+    color: #1769e0;
+    font-weight: 800;
+    margin-top: 10px;
+}
+
+.name {
+    font-size: 18px;
+    font-weight: 800;
+    margin: 5px 0 12px;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin: 14px 0;
+}
+
+.stat {
+    background: #f6f8fb;
+    border-radius: 13px;
+    padding: 18px;
+    margin: 10px;
+}
+
+.stat b {
+    display: block;
+    font-size: 27px;
+    margin-top: 5px;
+}
+
+.stat small {
+    display: block;
+    color: #667085;
+    margin-top: 6px;
+}
+
+.result-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 14px 0;
+}
+
+.result-grid>div {
+    background: #f7f9fc;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.result-grid span {
+    display: block;
+    color: #667085;
+    font-size: 12px;
+}
+
+.result-grid strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 18px;
+}
+
+.bar {
+    height: 17px;
+    background: #e8edf5;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.fill {
+    height: 100%;
+    background: #1769e0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    padding: 10px;
+    border-bottom: 1px solid #e8edf3;
+    text-align: left;
+}
+
+.badge {
+    display: inline-block;
+    border-radius: 20px;
+    padding: 5px 9px;
+    background: #e9f7ee;
+    color: #19713a;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.note {
+    padding: 12px;
+    background: #f7f9fc;
+    border-left: 4px solid #1769e0;
+    border-radius: 8px;
+}
+
+/* ==========================================
+   7. MODALS (POP-UP WINDOWS)
+   ================================---------- */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(23, 32, 51, 0.55);
+    backdrop-filter: blur(2px);
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 25px;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 12px 35px rgba(20, 50, 90, 0.15);
+    position: relative;
+    animation: modalScaleIn 0.25s ease-out;
+}
+
+.modal-content.photo-preview {
+    max-width: 400px;
+    text-align: center;
+}
+
+.close-btn {
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #667085;
+    cursor: pointer;
+    border: none;
+    background: none;
+    width: auto;
+    padding: 0;
+}
+
+.close-btn:hover {
+    color: #172033;
+    background: none;
+}
+
+@keyframes modalScaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* ==========================================
+   8. RESPONSIVE MEDIA QUERIES
+   ================================---------- */
+@media (max-width: 700px) {
+
+    .grid,
+    .row,
+    .result-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .login {
+        margin: 30px auto;
+    }
+
+    .modal-content {
+        margin: 10px;
+        padding: 20px;
+    }
+}
+
+/* Desain Kartu Pemilih */
+.voter-card {
+    background: white;
+    border: 2px solid #123b73;
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    page-break-inside: avoid;
+    /* Mencegah kartu terpotong halaman saat diprint */
+}
+
+.voter-card h3 {
+    margin: 0 0 10px 0;
+    color: #123b73;
+    font-size: 16px;
+    border-bottom: 1px dashed #ccc;
+    padding-bottom: 8px;
+}
+
+.voter-card .voter-type {
+    display: inline-block;
+    background: #e9eef7;
+    color: #17365f;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.voter-card .details {
+    text-align: left;
+    font-size: 13px;
+    margin-bottom: 5px;
+}
+
+.voter-card .details strong {
+    display: inline-block;
+    width: 80px;
+}
+
+/* Mode Cetak (Hanya tampilkan kartu) */
+@media print {
+    body {
+        background: white;
+    }
+
+    .no-print,
+    .filter-bar {
+        display: none !important;
+    }
+
+    .print-container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        /* 3 kolom di kertas A4 */
+        gap: 10px;
+        padding: 0;
+        max-width: 100%;
+    }
+
+    .voter-card {
+        border: 1px solid #000;
+        box-shadow: none;
+    }
+}
+
+.no-print {
+    background: #123b73;
+    color: white;
+    padding: 15px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.no-print a,
+.no-print button {
+    background: #e9eef7;
+    color: #17365f;
+    padding: 8px 15px;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.filter-bar {
+    padding: 15px 25px;
+    background: white;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+}
+
+/* Container Kartu */
+.print-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+    padding: 20px;
+    max-width: 1000px;
+    margin: auto;
+}
