@@ -33,9 +33,9 @@ unset($_SESSION['vote_error']);
             <div class="brand"><?= h(APP_NAME) ?></div>
             <div class="sub">Pencoblosan Digital</div>
         </div>
-        <form action="logout.php" method="post" style="margin: 0;">
+        <!--<form action="logout.php" method="post" style="margin: 0;">
             <button class="secondary" style="width: auto">Keluar</button>
-        </form>
+        </form>-->
     </header>
     
     <main>
@@ -81,7 +81,7 @@ unset($_SESSION['vote_error']);
                                 <input type="radio" name="candidate_id" value="<?= $c['id'] ?>" required style="display: none" onchange="pick(this)">
                                 
                                 <?php if (!empty($c['photo_url'])): ?>
-                                    <img src="../public/<?= h($c['photo_url']) ?>" alt="Foto calon">
+                                    <img src="../<?= h($c['photo_url']) ?>" alt="Foto calon">
                                 <?php else: ?>
                                     <div style="aspect-ratio: 1/1; border-radius: 10px; background: #dfe7f2; display: grid; place-items: center; font-size: 30px; font-weight: 800; color: #123b73">
                                         <?= sprintf('%02d', $c['candidate_number']) ?>

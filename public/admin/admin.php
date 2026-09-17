@@ -113,7 +113,8 @@ unset($r);
             <div class="sub">Panitia Pemilihan</div>
         </div>
         <div style="display: flex; align-items: center; gap: 10px;">
-			<a href="admin_voters.php" class="secondary" style="padding: 10px 16px; border-radius: 10px; background: #e9eef7; color: #17365f; font-weight: 700; text-decoration: none; font-size: 14px;">Lihat Status</a>
+			<a href="admin_add_voter.php" class="secondary" style="padding: 10px 16px; border-radius: 10px; background: #e9eef7; color: #17365f; font-weight: 700; text-decoration: none; font-size: 14px;">Tambah Pemilih</a>
+			<a href="admin_voters.php" class="secondary" style="padding: 10px 16px; border-radius: 10px; background: #e9eef7; color: #17365f; font-weight: 700; text-decoration: none; font-size: 14px;">Status Pemilih</a>
 			<a href="admin_cetak.php" class="secondary" style="padding: 10px 16px; border-radius: 10px; background: #e9eef7; color: #17365f; font-weight: 700; text-decoration: none; font-size: 14px;">Cetak Kartu</a>
             <a href="admin_candidates.php" class="secondary" style="padding: 10px 16px; border-radius: 10px; background: #e9eef7; color: #17365f; font-weight: 700; text-decoration: none; font-size: 14px; display: inline-flex; align-items: center; gap: 6px;">Kelola Paslon</a>
             <form action="admin_logout.php" method="post" style="margin: 0;">

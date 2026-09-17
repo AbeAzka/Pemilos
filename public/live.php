@@ -33,16 +33,35 @@ $viewType = isset($_GET['view']) && in_array($_GET['view'], $allowedViews) ? $_G
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <!-- Meta refresh mempertahankan parameter URL view -->
-    <meta http-equiv="refresh" content="2;url=?view=<?=h($viewType)?>">
+    <meta http-equiv="refresh" content="60;url=?view=<?=h($viewType)?>">
     <title>LIVE RESULT — <?=h(APP_NAME)?></title>
     <link rel="stylesheet" href="style.css">
     <style>
         body{background:#081426;color:#fff;font-family:sans-serif;}
         .live{max-width:1400px;margin:auto;padding:30px}
-        .live-head{text-align:center;margin-bottom:28px}
-        .live-title{font-size:clamp(30px,5vw,68px);font-weight:900}
-        .live-sub{font-size:clamp(16px,2vw,26px);opacity:.8}
-        .weight{font-size:16px;margin-top:8px}
+        
+        /* Header Utama dengan Logo Kiri & Kanan mengapit judul */
+        .live-head{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 28px;
+            text-align: center;
+            border-bottom: 1px solid #284566;
+            padding-bottom: 20px;
+        }
+        .live-head img {
+            height: 90px; /* Ukuran logo di header utama */
+            width: auto;
+            object-fit: contain;
+        }
+        .live-head-content {
+            flex-grow: 1;
+        }
+        .live-title{font-size:clamp(18px,4vw,24px);font-weight:900; margin: 0;}
+        .live-sub{font-size:clamp(14px,1.5vw,22px);opacity:.8; margin-top: 5px;}
+        .weight{font-size:15px;margin-top:6px; opacity: 0.9;}
         
         /* Switcher Tampilan */
         .view-switcher { display: flex; justify-content: center; gap: 10px; margin: 20px 0 30px; }
@@ -51,12 +70,43 @@ $viewType = isset($_GET['view']) && in_array($_GET['view'], $allowedViews) ? $_G
         .view-switcher a.active { background: #55a7ff; color: #081426; font-weight: bold; border-color: #55a7ff; }
 
         .live-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}
-        .live-card{background:#10233f;border:1px solid #284566;border-radius:22px;padding:26px;display:flex;flex-direction:column;}
+        
+        /* Kartu Utama */
+        .live-card{
+            background:#10233f;
+            border:1px solid #284566;
+            border-radius:22px;
+            padding:26px;
+            display:flex;
+            flex-direction:column;
+            position: relative;
+            overflow: hidden; /* Agar foto background tidak keluar border kartu */
+        }
+
+        /* Watermark Foto Paslon di Belakang */
+        .card-bg-photo {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.20; /* Tingkat transparansi watermark (0.0 - 1.0) */
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Pastikan konten di dalam kartu berada di atas background foto */
+        .live-number, .live-name, .visual-container, .breakdown {
+            position: relative;
+            z-index: 2;
+        }
+
         .live-number{font-size:22px;font-weight:800}
         .live-name{font-size:clamp(22px,3vw,38px);font-weight:900;margin:8px 0 22px}
         
         .breakdown{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:auto;padding-top:24px;}
-        .mini{background:#0b1a2e;border-radius:14px;padding:14px;text-align:center}
+        .mini{background:rgba(11, 26, 46, 0.85);border-radius:14px;padding:14px;text-align:center; backdrop-filter: blur(4px);}
         .mini span{display:block;opacity:.75;font-size:14px}
         .mini b{font-size:24px}
         .footer{text-align:center;margin-top:28px;opacity:.75}
@@ -72,7 +122,6 @@ $viewType = isset($_GET['view']) && in_array($_GET['view'], $allowedViews) ? $_G
         /* Gauge Style */
         .gauge-wrapper { position: relative; width: 100%; max-width: 300px; margin: 0 auto; }
         .gauge-svg { width: 100%; overflow: visible; }
-        /* DIPERBAIKI: width dikembalikan ke 100% agar text center presisi */
         .gauge-text { position: absolute; bottom: 0; left: 0; width: 100%; text-align: center; font-size: clamp(34px, 5vw, 50px); font-weight: 900; line-height: 1; }
 
         /* Ring Style */
@@ -85,16 +134,21 @@ $viewType = isset($_GET['view']) && in_array($_GET['view'], $allowedViews) ? $_G
 </head>
 <body>
     <main class="live">
+        <!-- Header Utama: Logo Kiri - Teks Judul - Logo Kanan -->
         <div class="live-head">
-            <div class="live-title">LIVE RESULT</div>
-            <div class="live-sub"><?=h(APP_NAME)?></div>
-            <div class="weight">Bobot: Siswa <?=$studentWeight?>% · Guru <?=$teacherWeight?>%</div>
-            
-            <div class="view-switcher">
-                <a href="?view=bar" class="<?= $viewType === 'bar' ? 'active' : '' ?>">Progress Bar</a>
-                <a href="?view=gauge" class="<?= $viewType === 'gauge' ? 'active' : '' ?>">Gauge Meter</a>
-                <a href="?view=ring" class="<?= $viewType === 'ring' ? 'active' : '' ?>">Ring Circle</a>
+            <img src="/admin/images/logo1.png" alt="Logo Kiri">
+            <div class="live-head-content">
+                <div class="live-title">HASIL PENGHITUNGAN SUARA</div>
+                <div class="live-sub"><?=h(APP_NAME)?></div>
+                <div class="weight">Bobot: Siswa <?=$studentWeight?>% · Guru <?=$teacherWeight?>%</div>
             </div>
+            <img src="/admin/images/logo2.png" alt="Logo Kanan">
+        </div>
+
+        <div class="view-switcher">
+            <a href="?view=bar" class="<?= $viewType === 'bar' ? 'active' : '' ?>">Progress Bar</a>
+            <a href="?view=gauge" class="<?= $viewType === 'gauge' ? 'active' : '' ?>">Gauge Meter</a>
+            <a href="?view=ring" class="<?= $viewType === 'ring' ? 'active' : '' ?>">Ring Circle</a>
         </div>
 
         <div class="live-grid">
@@ -102,12 +156,16 @@ $viewType = isset($_GET['view']) && in_array($_GET['view'], $allowedViews) ? $_G
                 $p = min(100, max(0, $r['weighted'])); // Pastikan persentase 0-100
             ?>
             <section class="live-card">
+                <!-- Foto Paslon sebagai background semi-transparan -->
+                <?php if(!empty($r['photo_url'])): ?>
+                    <img src="<?=h($r['photo_url'])?>" class="card-bg-photo" alt="Foto <?=h($r['name'])?>">
+                <?php endif; ?>
+
                 <div class="live-number">NOMOR URUT <?=sprintf('%02d',$r['candidate_number'])?></div>
                 <div class="live-name"><?=h($r['name'])?></div>
                 
                 <div class="visual-container">
                     <?php if ($viewType === 'gauge'): 
-                        // Rumus panjang SVG Path untuk setengah lingkaran: pi * radius (40) = 125.66
                         $dash = 125.66;
                         $offset = $dash - ($dash * $p / 100);
                     ?>
@@ -121,7 +179,6 @@ $viewType = isset($_GET['view']) && in_array($_GET['view'], $allowedViews) ? $_G
                         </div>
 
                     <?php elseif ($viewType === 'ring'): 
-                        // Rumus panjang SVG Lingkaran penuh: 2 * pi * radius (40) = 251.32
                         $dash = 251.32; 
                         $offset = $dash - ($dash * $p / 100);
                     ?>

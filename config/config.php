@@ -1,9 +1,9 @@
 <?php
 // Database configuration
-define('DB_HOST', 'localhost');
+define('DB_HOST', '103.127.99.151');
 define('DB_NAME', 'db_pilketos');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_USER', 'acc_azka');
+define('DB_PASS', '8YW8*Bx[sn/vY@LN');
 
 // Change this in production.
 define('APP_NAME', 'PILKETOS SMAN 1 GONDANG');
