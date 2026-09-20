@@ -48,6 +48,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($action === 'add_candidate') {
             $candidate_number = trim($_POST['candidate_number'] ?? '');
             $name = trim($_POST['name'] ?? '');
+            $vision = trim($_POST['vision'] ?? '');
+            $mission = trim($_POST['mission'] ?? '');
+            $proker = trim($_POST['proker'] ?? '');
             $is_active = isset($_POST['is_active']) ? 1 : 0;
             
             if ($candidate_number === '' || $name === '') {
@@ -59,8 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $photo_url = ''; // Default kosong jika tidak upload
             }
             
-            $stmt = $pdo->prepare("INSERT INTO candidates (candidate_number, name, photo_url, is_active) VALUES (?, ?, ?, ?)");
-            $stmt->execute([$candidate_number, $name, $photo_url, $is_active]);
+            $stmt = $pdo->prepare("INSERT INTO candidates (candidate_number, name, vision, mission, proker, photo_url, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$candidate_number, $name, $vision, $mission, $proker, $photo_url, $is_active]);
             $success = 'Kandidat baru berhasil ditambahkan.';
         }
         
@@ -69,6 +72,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = (int)($_POST['id'] ?? 0);
             $candidate_number = trim($_POST['candidate_number'] ?? '');
             $name = trim($_POST['name'] ?? '');
+            $vision = trim($_POST['vision'] ?? '');
+            $mission = trim($_POST['mission'] ?? '');
+            $proker = trim($_POST['proker'] ?? '');
             $is_active = isset($_POST['is_active']) ? 1 : 0;
             
             if ($id <= 0 || $candidate_number === '' || $name === '') {
@@ -87,8 +93,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $photo_url = $new_photo;
             }
             
-            $stmt = $pdo->prepare("UPDATE candidates SET candidate_number = ?, name = ?, photo_url = ?, is_active = ? WHERE id = ?");
-            $stmt->execute([$candidate_number, $name, $photo_url, $is_active, $id]);
+            $stmt = $pdo->prepare("UPDATE candidates SET candidate_number = ?, name = ?, vision = ?, mission = ?, proker = ?, photo_url = ?, is_active = ? WHERE id = ?");
+            $stmt->execute([$candidate_number, $name, $vision, $mission, $proker, $photo_url, $is_active, $id]);
             $success = 'Data kandidat berhasil diperbarui.';
         }
         
@@ -138,7 +144,9 @@ $candidates = $pdo->query("SELECT * FROM candidates ORDER BY candidate_number AS
             padding: 30px 25px 25px 25px;
             border-radius: 16px;
             width: 100%;
-            max-width: 480px;
+            max-width: 540px;
+            max-height: 90vh;
+            overflow-y: auto;
             box-shadow: 0 12px 35px rgba(20, 50, 90, 0.15);
             position: relative;
             animation: fadeIn 0.3s ease;
@@ -168,6 +176,22 @@ $candidates = $pdo->query("SELECT * FROM candidates ORDER BY candidate_number AS
         .close-btn:hover {
             background: #eef2f7;
             color: #172033;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 80px;
+            box-sizing: border-box;
+        }
+        textarea:focus {
+            border-color: #1769e0;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(23, 105, 224, 0.2);
         }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-10px); }
@@ -201,7 +225,7 @@ $candidates = $pdo->query("SELECT * FROM candidates ORDER BY candidate_number AS
         <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <h2 style="margin-bottom: 5px;">Daftar Pasangan Calon</h2>
-                <p class="muted" style="margin: 0;">Kelola data seluruh paslon yang terdaftar di sistem.</p>
+                <p class="muted" style="margin: 0;">Kelola data seluruh paslon beserta visi, misi, dan program kerjanya.</p>
             </div>
             <button type="button" onclick="openModal('addModal')" style="width: auto; padding: 12px 20px;">+ Tambah Paslon</button>
         </div>
@@ -285,10 +309,27 @@ $candidates = $pdo->query("SELECT * FROM candidates ORDER BY candidate_number AS
                     </div>
                 </div>
                 
-                <label>Upload Foto Paslon</label>
-                <input type="file" name="photo" accept="image/*" style="padding: 9px;">
+                <div style="margin-top: 10px;">
+                    <label>Visi</label>
+                    <textarea name="vision" placeholder="Tuliskan visi paslon..."></textarea>
+                </div>
+
+                <div style="margin-top: 10px;">
+                    <label>Misi</label>
+                    <textarea name="mission" placeholder="Tuliskan poin-poin misi paslon..."></textarea>
+                </div>
+
+                <div style="margin-top: 10px;">
+                    <label>Program Kerja (Proker)</label>
+                    <textarea name="proker" placeholder="Tuliskan program kerja paslon..."></textarea>
+                </div>
+
+                <div style="margin-top: 10px;">
+                    <label>Upload Foto Paslon</label>
+                    <input type="file" name="photo" accept="image/*" style="padding: 9px; width: 100%; box-sizing: border-box;">
+                </div>
                 
-                <div style="margin: 12px 0; display: flex; align-items: center; gap: 8px;">
+                <div style="margin: 15px 0; display: flex; align-items: center; gap: 8px;">
                     <input type="checkbox" name="is_active" value="1" checked style="width: auto; margin: 0;">
                     <label style="margin: 0; font-weight: normal;">Status Aktif</label>
                 </div>
@@ -318,12 +359,29 @@ $candidates = $pdo->query("SELECT * FROM candidates ORDER BY candidate_number AS
                         <input type="text" name="name" id="edit_name" required>
                     </div>
                 </div>
+
+                <div style="margin-top: 10px;">
+                    <label>Visi</label>
+                    <textarea name="vision" id="edit_vision"></textarea>
+                </div>
+
+                <div style="margin-top: 10px;">
+                    <label>Misi</label>
+                    <textarea name="mission" id="edit_mission"></textarea>
+                </div>
+
+                <div style="margin-top: 10px;">
+                    <label>Program Kerja (Proker)</label>
+                    <textarea name="proker" id="edit_proker"></textarea>
+                </div>
                 
-                <label>Ganti Foto Paslon (Opsional)</label>
-                <input type="file" name="photo" accept="image/*" style="padding: 9px;">
-                <small class="muted" style="display:block; margin-top:-10px; margin-bottom:10px;">Biarkan kosong jika tidak ingin mengubah foto.</small>
+                <div style="margin-top: 10px;">
+                    <label>Ganti Foto Paslon (Opsional)</label>
+                    <input type="file" name="photo" accept="image/*" style="padding: 9px; width: 100%; box-sizing: border-box;">
+                    <small class="muted" style="display:block; margin-top:4px;">Biarkan kosong jika tidak ingin mengubah foto.</small>
+                </div>
                 
-                <div style="margin: 12px 0; display: flex; align-items: center; gap: 8px;">
+                <div style="margin: 15px 0; display: flex; align-items: center; gap: 8px;">
                     <input type="checkbox" name="is_active" value="1" id="edit_is_active" style="width: auto; margin: 0;">
                     <label style="margin: 0; font-weight: normal;">Status Aktif</label>
                 </div>
@@ -355,6 +413,9 @@ $candidates = $pdo->query("SELECT * FROM candidates ORDER BY candidate_number AS
             document.getElementById('edit_id').value = data.id;
             document.getElementById('edit_candidate_number').value = data.candidate_number;
             document.getElementById('edit_name').value = data.name;
+            document.getElementById('edit_vision').value = data.vision || '';
+            document.getElementById('edit_mission').value = data.mission || '';
+            document.getElementById('edit_proker').value = data.proker || '';
             document.getElementById('edit_is_active').checked = data.is_active == 1;
             openModal('editModal');
         }

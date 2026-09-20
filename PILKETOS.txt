@@ -1,0 +1,6 @@
+Admin Panel
+- User: admin
+- Pass: admin@123
+
+Voters Dashboard
+- Lihat PDF

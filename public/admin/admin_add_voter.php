@@ -165,7 +165,7 @@ $total_data = $stmtCount->fetchColumn();
 $total_pages = ceil($total_data / $limit);
 
 // Fetch data
-$query = "SELECT * FROM voters WHERE $whereClause ORDER BY id DESC LIMIT $limit OFFSET $offset";
+$query = "SELECT * FROM voters WHERE $whereClause ORDER BY class_name ASC LIMIT $limit OFFSET $offset";
 $stmt = $pdo->prepare($query);
 $stmt->execute($params);
 $voters = $stmt->fetchAll();

@@ -4,14 +4,18 @@ require_admin();
 
 $pdo = db();
 
-// 1. Konfigurasi Pagination
-$limit = 21; // 21 kartu per halaman (cocok untuk 3 kolom di kertas A4)
-$page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
-$offset = ($page - 1) * $limit;
-
-// 2. Ambil parameter filter
+// 1. Ambil parameter filter & pagination
 $type = $_GET['type'] ?? 'all';
 $class_filter = $_GET['class'] ?? 'all';
+$per_page_input = $_GET['per_page'] ?? '21';
+
+// Jika 'all', set limit besar atau ambil semua; jika angka, gunakan sebagai limit
+$is_all_pages = ($per_page_input === 'all');
+$limit = $is_all_pages ? PHP_INT_MAX : (int)$per_page_input;
+if ($limit <= 0) $limit = 21;
+
+$page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
+$offset = ($page - 1) * ($is_all_pages ? 1 : $limit);
 
 $whereClause = "1=1";
 $params = [];
@@ -29,19 +33,30 @@ if ($class_filter !== 'all') {
     $params['class_name'] = $class_filter;
 }
 
-// 3. Hitung Total Data untuk Pagination
+// 2. Hitung Total Data
 $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM voters WHERE $whereClause");
 $stmtCount->execute($params);
 $total_data = $stmtCount->fetchColumn();
-$total_pages = ceil($total_data / $limit);
 
-// 4. Ambil Data Sesuai Halaman (Limit & Offset)
-$query = "SELECT * FROM voters WHERE $whereClause ORDER BY id ASC LIMIT $limit OFFSET $offset";
-$votersStmt = $pdo->prepare($query);
-$votersStmt->execute($params);
+$total_pages = $is_all_pages ? 1 : ceil($total_data / $limit);
+if ($page > $total_pages && $total_pages > 0) {
+    $page = $total_pages;
+    $offset = ($page - 1) * $limit;
+}
+
+// 3. Ambil Data (Sesuai Halaman atau Semua)
+if ($is_all_pages) {
+    $query = "SELECT * FROM voters WHERE $whereClause ORDER BY class_name ASC, id ASC";
+    $votersStmt = $pdo->prepare($query);
+    $votersStmt->execute($params);
+} else {
+    $query = "SELECT * FROM voters WHERE $whereClause ORDER BY class_name ASC, id ASC LIMIT $limit OFFSET $offset";
+    $votersStmt = $pdo->prepare($query);
+    $votersStmt->execute($params);
+}
 $voters = $votersStmt->fetchAll();
 
-// 5. Ambil daftar kelas untuk dropdown filter
+// 4. Ambil daftar kelas untuk dropdown filter
 $stmtClasses = $pdo->query("SELECT DISTINCT class_name FROM voters WHERE class_name IS NOT NULL AND class_name != '' ORDER BY class_name ASC");
 $classes = $stmtClasses->fetchAll(PDO::FETCH_COLUMN);
 ?>
@@ -53,7 +68,7 @@ $classes = $stmtClasses->fetchAll(PDO::FETCH_COLUMN);
     <title>Cetak Kartu Pemilih</title>
     <link rel="stylesheet" href="../style.css">
     <style>
-        /* CSS Khusus Pagination */
+        /* CSS Pagination */
         .pagination {
             display: flex;
             gap: 6px;
@@ -88,7 +103,7 @@ $classes = $stmtClasses->fetchAll(PDO::FETCH_COLUMN);
             border-color: #e2e8f0;
         }
 
-        /* --- UI FILTER BAR BARU --- */
+        /* --- UI FILTER BAR MODERN --- */
         .filter-bar-modern {
             background: #ffffff;
             padding: 20px 30px;
@@ -130,7 +145,7 @@ $classes = $stmtClasses->fetchAll(PDO::FETCH_COLUMN);
             outline: none;
             cursor: pointer;
             transition: all 0.2s;
-            min-width: 140px;
+            min-width: 130px;
         }
 
         .custom-select:hover {
@@ -153,12 +168,11 @@ $classes = $stmtClasses->fetchAll(PDO::FETCH_COLUMN);
             color: #2d3748;
         }
 
-        /* CSS Desain Kartu Tambahan */
+        /* --- CSS DESAIN KARTU --- */
         .voter-card {
             position: relative;
-            overflow: hidden; /* Agar watermark tidak keluar kotak */
+            overflow: hidden;
             background-color: #ffffff;
-            /* Pastikan Anda sudah memiliki width, padding, border dll di style.css */
         }
         
         .card-header {
@@ -167,13 +181,13 @@ $classes = $stmtClasses->fetchAll(PDO::FETCH_COLUMN);
             align-items: center;
             margin-bottom: 10px;
             position: relative;
-            z-index: 2; /* Di atas watermark */
+            z-index: 2;
             border-bottom: 2px solid #eee;
             padding-bottom: 10px;
         }
         
         .card-header img {
-            height: 35px; /* Sesuaikan ukuran logo */
+            height: 35px;
             width: auto;
         }
         
@@ -186,7 +200,7 @@ $classes = $stmtClasses->fetchAll(PDO::FETCH_COLUMN);
 
         .card-body {
             position: relative;
-            z-index: 2; /* Konten tulisan di atas watermark */
+            z-index: 2;
             text-align: center;
         }
 
@@ -195,20 +209,20 @@ $classes = $stmtClasses->fetchAll(PDO::FETCH_COLUMN);
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            opacity: 0.15; /* Tingkat transparansi watermark (0.0 - 1.0) */
-            width: 60%; /* Besaran watermark di dalam kartu */
-            z-index: 1; /* Di bawah teks */
+            opacity: 0.15;
+            width: 60%;
+            z-index: 1;
             pointer-events: none;
         }
 
-        /* Mode Cetak (Sembunyikan Elemen Non-Cetak) */
+        /* Mode Cetak */
         @media print {
             .no-print, .pagination { 
                 display: none !important; 
             }
             .voter-card {
                 -webkit-print-color-adjust: exact;
-                print-color-adjust: exact; /* Pastikan background/watermark ikut tercetak */
+                print-color-adjust: exact;
             }
         }
     </style>
@@ -217,11 +231,11 @@ $classes = $stmtClasses->fetchAll(PDO::FETCH_COLUMN);
 
     <header class="no-print">
         <div>
-            <div class="brand"><?= h(APP_NAME) ?> — CETAK KARTU</div>
+            <div class="brand"><?= h(APP_NAME) ?> — CETAK KARTU PEMILIH</div>
             <div class="sub">Panitia Pemilihan</div>
         </div>
         <div style="display: flex; align-items: center; gap: 10px;">
-            <button onclick="window.print()" style="background: #176b37; color: white; margin-left: 10px; width: auto; padding: 10px 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px;">🖨️ Cetak Halaman Ini</button>
+            <button onclick="window.print()" style="background: #176b37; color: white; margin-left: 10px; width: auto; padding: 10px 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px;">🖨️ Cetak Halaman Aktif</button>
             <a href="admin.php" class="secondary" style="display:inline-block; padding:10px 14px; border-radius:8px; background:#e9eef7; color:#17365f; font-weight:700; text-decoration:none; margin-right:8px; font-size: 14px;">Dashboard</a>
             <form action="admin_logout.php" method="post" style="display:inline; margin: 0;">
                 <button class="secondary" style="width: auto; padding: 10px 15px; border-radius: 8px;">Keluar</button>
@@ -229,7 +243,7 @@ $classes = $stmtClasses->fetchAll(PDO::FETCH_COLUMN);
         </div>
     </header>
 
-    <!-- UI Filter yang Diperbarui -->
+    <!-- UI Filter & Opsi Tampilan -->
     <div class="no-print filter-bar-modern">
         <form method="GET" action="" id="filterForm" class="filter-form-group">
             <div class="filter-item">
@@ -250,26 +264,39 @@ $classes = $stmtClasses->fetchAll(PDO::FETCH_COLUMN);
                     <?php endforeach; ?>
                 </select>
             </div>
+
+            <div class="filter-item">
+                <label for="per_page">Per Halaman :</label>
+                <select name="per_page" id="per_page" onchange="document.getElementById('filterForm').submit()" class="custom-select">
+                    <option value="21" <?= $per_page_input === '21' ? 'selected' : '' ?>>21 Kartu</option>
+                    <option value="30" <?= $per_page_input === '30' ? 'selected' : '' ?>>30 Kartu</option>
+                    <option value="50" <?= $per_page_input === '50' ? 'selected' : '' ?>>50 Kartu</option>
+                    <option value="all" <?= $per_page_input === 'all' ? 'selected' : '' ?>>Semua Data</option>
+                </select>
+            </div>
             
-            <!-- Tombol Reset Filter jika ada filter yang aktif -->
-            <?php if($type !== 'all' || $class_filter !== 'all'): ?>
+            <?php if($type !== 'all' || $class_filter !== 'all' || $per_page_input !== '21'): ?>
                 <a href="?" style="font-size: 13px; color: #e53e3e; text-decoration: none; padding: 6px 12px; border-radius: 6px; background: #fff5f5; border: 1px solid #fed7d7; font-weight: 600;">✖ Reset Filter</a>
             <?php endif; ?>
         </form>
         
         <div class="filter-stats">
-            Menampilkan halaman <b><?= $page ?></b> dari <b><?= $total_pages ?></b> (Total <b><?= $total_data ?></b> kartu pemilih)
+            <?php if ($is_all_pages): ?>
+                Menampilkan <b>seluruh data</b> sekaligus (Total <b><?= $total_data ?></b> kartu pemilih)
+            <?php else: ?>
+                Menampilkan halaman <b><?= $page ?></b> dari <b><?= $total_pages ?></b> (Total <b><?= $total_data ?></b> kartu pemilih)
+            <?php endif; ?>
         </div>
     </div>
 
-    <!-- Area yang akan diprint -->
+    <!-- Area Kartu Pemilih -->
     <div class="print-container">
         <?php foreach ($voters as $v): ?>
             <div class="voter-card">
                 <!-- Watermark Background -->
                 <img src="/admin/images/watermark.png" class="watermark" alt="watermark">
 
-                <!-- Header Kartu: Logo Kiri - Judul - Logo Kanan -->
+                <!-- Header Kartu -->
                 <div class="card-header">
                     <img src="/admin/images/logo1.png" alt="Logo Kiri">
                     <h3>KARTU PEMILIH <br> Ketua dan Wakil Ketua OSIS Tahun 2026/2027</h3>
@@ -302,17 +329,17 @@ $classes = $stmtClasses->fetchAll(PDO::FETCH_COLUMN);
         <?php endif; ?>
     </div>
 
-    <!-- Kontrol Pagination (Tidak akan ikut tercetak) -->
-    <?php if ($total_pages > 1): ?>
+    <!-- Kontrol Pagination -->
+    <?php if (!$is_all_pages && $total_pages > 1): ?>
         <div class="pagination no-print">
             <!-- Tombol Prev -->
             <?php if ($page > 1): ?>
-                <a href="?type=<?= urlencode($type) ?>&class=<?= urlencode($class_filter) ?>&page=<?= $page - 1 ?>">&laquo; Prev</a>
+                <a href="?type=<?= urlencode($type) ?>&class=<?= urlencode($class_filter) ?>&per_page=<?= urlencode($per_page_input) ?>&page=<?= $page - 1 ?>">&laquo; Prev</a>
             <?php else: ?>
                 <span class="disabled">&laquo; Prev</span>
             <?php endif; ?>
 
-            <!-- Angka Halaman (Dibatasi tampilannya) -->
+            <!-- Angka Halaman -->
             <?php
             $start_page = max(1, $page - 2);
             $end_page = min($total_pages, $page + 2);
@@ -320,7 +347,7 @@ $classes = $stmtClasses->fetchAll(PDO::FETCH_COLUMN);
             if ($start_page > 1) echo '<span>...</span>';
 
             for ($i = $start_page; $i <= $end_page; $i++): ?>
-                <a href="?type=<?= urlencode($type) ?>&class=<?= urlencode($class_filter) ?>&page=<?= $i ?>" class="<?= $i === $page ? 'active' : '' ?>">
+                <a href="?type=<?= urlencode($type) ?>&class=<?= urlencode($class_filter) ?>&per_page=<?= urlencode($per_page_input) ?>&page=<?= $i ?>" class="<?= $i === $page ? 'active' : '' ?>">
                     <?= $i ?>
                 </a>
             <?php endfor; 
@@ -330,7 +357,7 @@ $classes = $stmtClasses->fetchAll(PDO::FETCH_COLUMN);
 
             <!-- Tombol Next -->
             <?php if ($page < $total_pages): ?>
-                <a href="?type=<?= urlencode($type) ?>&class=<?= urlencode($class_filter) ?>&page=<?= $page + 1 ?>">Next &raquo;</a>
+                <a href="?type=<?= urlencode($type) ?>&class=<?= urlencode($class_filter) ?>&per_page=<?= urlencode($per_page_input) ?>&page=<?= $page + 1 ?>">Next &raquo;</a>
             <?php else: ?>
                 <span class="disabled">Next &raquo;</span>
             <?php endif; ?>

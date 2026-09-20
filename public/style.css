@@ -177,9 +177,16 @@ button.secondary:hover {
    6. GRID, STATS & COMPONENTS
    ================================---------- */
 .grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+    display: flex;             /* Menggunakan Flexbox agar pemusatan baris sisa 1/2 lebih sempurna */
+    flex-wrap: wrap;           /* Membungkus kartu ke baris berikutnya jika layar penuh */
+    justify-content: center;   /* KUNCI UTAMA: Membuat seluruh baris (termasuk sisa 1 atau 2 di bawah) rata tengah */
+    gap: 16px;                 /* Jarak antar kartu */
+}
+
+.candidate-wrapper {
+    flex: 0 1 280px;           /* Lebar standar setiap kartu (fleksibel tapi maksimal 280px) */
+    display: flex;
+    flex-direction: column;
 }
 
 .candidate {
@@ -187,6 +194,9 @@ button.secondary:hover {
     border-radius: 14px;
     padding: 14px;
     cursor: pointer;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .candidate.selected {
@@ -501,3 +511,4 @@ td {
     max-width: 1000px;
     margin: auto;
 }
+

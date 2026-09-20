@@ -44,7 +44,7 @@ $total_data = $stmtCount->fetchColumn();
 $total_pages = ceil($total_data / $limit);
 
 // Ambil Data Sesuai Halaman (Limit & Offset)
-$query = "SELECT * FROM voters WHERE $whereClause ORDER BY username ASC LIMIT $limit OFFSET $offset";
+$query = "SELECT * FROM voters WHERE $whereClause ORDER BY class_name ASC LIMIT $limit OFFSET $offset";
 $stmt = $pdo->prepare($query);
 $stmt->execute($params);
 $voters = $stmt->fetchAll();
@@ -162,6 +162,8 @@ $voters = $stmt->fetchAll();
                         <tr>
                             <th style="width: 100px;">No</th>
                             <th>Username</th>
+							<th>Nama Lengkap</th>
+                            <th>Kelas</th>
                             <th>Tipe Pemilih</th>
                             <th>Status Partisipasi</th>
                         </tr>
@@ -174,6 +176,8 @@ $voters = $stmt->fetchAll();
                             <tr>
                                 <td><?= $no++ ?></td>
                                 <td><strong><?= h($v['username']) ?></strong></td>
+								<td><?= h($v['student_name'] ?? '-') ?></td>
+                                <td><?= h($v['class_name'] ?? '-') ?></td>
                                 <td>
                                     <?= $v['voter_type'] === 'student' ? 'Siswa' : 'Guru' ?>
                                 </td>
