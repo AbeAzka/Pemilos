@@ -220,7 +220,7 @@ unset($_SESSION['vote_error']);
                 
                 <div class="card">
                     <h2>Pilih Calon Ketua OSIS</h2>
-                    <p class="muted">Pilih salah satu calon di bawah ini. Anda dapat melihat Visi & Misi terlebih dahulu.</p>
+                    <p class="muted">Silahkan pilih salah satu calon di bawah ini. Anda dapat melihat Visi & Misi terlebih dahulu.</p>
                     
                     <div class="grid">
                         <?php foreach ($candidates as$c): ?>

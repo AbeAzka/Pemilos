@@ -104,23 +104,79 @@ unset($r);
         .controls-grid .card {
             margin-bottom: 0;
         }
+
+        /* --- CSS Khusus Menu Navigasi (Header) --- */
+        header {
+            background: #123b73;
+            color: #fff;
+            padding: 16px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap; /* Mengizinkan elemen turun ke baris baru di layar kecil */
+            gap: 15px;
+        }
+        .header-brand {
+            flex-shrink: 0;
+        }
+        .header-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap; /* Jika layar sangat kecil, menu akan turun rapi */
+        }
+        .nav-link {
+            padding: 9px 14px; 
+            border-radius: 8px; 
+            background: #e9eef7; 
+            color: #17365f; 
+            font-weight: 700; 
+            text-decoration: none; 
+            font-size: 13px;
+            transition: all 0.2s;
+            white-space: nowrap; /* Mencegah teks menu patah ke bawah */
+        }
+        .nav-link:hover {
+            background: #d0daeb;
+        }
+        .nav-btn-logout {
+            padding: 9px 14px;
+            border-radius: 8px;
+            background: #a51d2d; /* Warna merah agar kontras */
+            color: white;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+        .nav-btn-logout:hover {
+            background: #8b1826;
+        }
+        /* ------------------------------------------ */
     </style>
 </head>
 <body>
     <header>
-        <div>
+        <div class="header-brand">
             <div class="brand"><?= h(APP_NAME) ?> — DASHBOARD</div>
             <div class="sub">Panitia Pemilihan</div>
         </div>
-        <div style="display: flex; align-items: center; gap: 10px;">
-			<a href="admin_add_voter.php" class="secondary" style="padding: 10px 16px; border-radius: 10px; background: #e9eef7; color: #17365f; font-weight: 700; text-decoration: none; font-size: 14px;">Tambah Pemilih</a>
-			<a href="admin_voters.php" class="secondary" style="padding: 10px 16px; border-radius: 10px; background: #e9eef7; color: #17365f; font-weight: 700; text-decoration: none; font-size: 14px;">Status Pemilih</a>
-			<a href="admin_cetak.php" class="secondary" style="padding: 10px 16px; border-radius: 10px; background: #e9eef7; color: #17365f; font-weight: 700; text-decoration: none; font-size: 14px;">Cetak Kartu</a>
-            <a href="admin_candidates.php" class="secondary" style="padding: 10px 16px; border-radius: 10px; background: #e9eef7; color: #17365f; font-weight: 700; text-decoration: none; font-size: 14px; display: inline-flex; align-items: center; gap: 6px;">Kelola Paslon</a>
+        
+        <!-- Navigasi Menu Admin -->
+        <nav class="header-nav">
+           
+            <a href="admin_add_voter.php" class="nav-link">Tambah Pemilih</a>
+            <a href="admin_voters.php" class="nav-link">Status Pemilih</a>
+            
+            <a href="admin_candidates.php" class="nav-link">Kelola Paslon</a>
+			<a href="admin_cetak.php" class="nav-link">Cetak Kartu</a>
+			 <a href="rekap_hasil.php" class="nav-link">Rekap Hasil</a>
             <form action="admin_logout.php" method="post" style="margin: 0;">
-                <button class="secondary" style="width: auto; padding: 10px 16px;">Keluar</button>
+                <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
+                <button type="submit" class="nav-btn-logout">Keluar</button>
             </form>
-        </div>
+        </nav>
     </header>
     
     <main>
