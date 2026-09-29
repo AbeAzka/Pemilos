@@ -6,7 +6,7 @@ define('DB_USER', 'acc_azka');
 define('DB_PASS', '8YW8*Bx[sn/vY@LN');
 
 // Change this in production.
-define('APP_NAME', 'PILKETOS SMAN 1 GONDANG');
+define('APP_NAME', 'E-VOTING SMAN 1 GONDANG');
 define('BASE_URL', '');
 date_default_timezone_set('Asia/Jakarta');
 

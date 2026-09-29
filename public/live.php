@@ -23,6 +23,10 @@ foreach($results as &$r){
 unset($r);
 $updated=date('H:i:s');
 
+$live_title = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'live_title'")->fetchColumn() ?: 'PEMILIHAN KETUA OSIS';
+$logo1 = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'logo1'")->fetchColumn() ?: '/admin/images/logo1.png';
+$logo2 = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'logo2'")->fetchColumn() ?: '/admin/images/logo2.png';
+
 // Opsi Tampilan: bar, gauge, ring
 $allowedViews = ['bar', 'gauge', 'ring'];
 $viewType = isset($_GET['view']) && in_array($_GET['view'], $allowedViews) ? $_GET['view'] : 'ring';
@@ -212,13 +216,12 @@ $viewType = isset($_GET['view']) && in_array($_GET['view'], $allowedViews) ? $_G
     <main class="live">
         <!-- Header Utama -->
         <div class="live-head">
-            <img src="/admin/images/logo1.png" alt="Logo Kiri">
-            <div class="live-head-content">
-                <div class="live-title">HASIL PENGHITUNGAN SUARA</div>
-                <div class="live-sub"><?=h(APP_NAME)?></div>
-                <div class="weight">Bobot: Siswa <?=$studentWeight?>% · Guru <?=$teacherWeight?>%</div>
-            </div>
-            <img src="/admin/images/logo2.png" alt="Logo Kanan">
+            <img src="<?= h($logo1) ?>" alt="Logo 1" style="height: 70px;">
+			<div style="text-align: center;">
+				<h1 style="margin: 0; font-size: 24px; text-transform: uppercase;"><?= h($live_title) ?></h1>
+				<p style="margin: 5px 0 0 0; opacity: 0.8;">Live Count & Statistik Perolehan Suara Berbobot</p>
+			</div>
+			<img src="<?= h($logo2) ?>" alt="Logo 2" style="height: 70px;">
         </div>
 
         <div class="view-switcher">

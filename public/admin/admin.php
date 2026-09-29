@@ -171,7 +171,8 @@ unset($r);
             
             <a href="admin_candidates.php" class="nav-link">Kelola Paslon</a>
 			<a href="admin_cetak.php" class="nav-link">Cetak Kartu</a>
-			 <a href="rekap_hasil.php" class="nav-link">Rekap Hasil</a>
+			<a href="rekap_hasil.php" class="nav-link">Rekap Hasil</a>
+			<a href="settings.php" class="nav-link">Pengaturan</a>
             <form action="admin_logout.php" method="post" style="margin: 0;">
                 <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
                 <button type="submit" class="nav-btn-logout">Keluar</button>

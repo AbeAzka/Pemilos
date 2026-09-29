@@ -14,7 +14,7 @@ $has_voted = (bool)$stmt_voter->fetchColumn();
 
 // Ambil daftar kandidat yang aktif
 $candidates =$pdo->query("SELECT * FROM candidates WHERE is_active = 1 ORDER BY candidate_number")->fetchAll();
-
+$vote_title = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'vote_title'")->fetchColumn() ?: 'PILIH CALON KETUA OSIS';
 // Ambil pesan error jika ada
 $error =$_SESSION['vote_error'] ?? '';
 unset($_SESSION['vote_error']);
@@ -219,7 +219,7 @@ unset($_SESSION['vote_error']);
                 <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
                 
                 <div class="card">
-                    <h2>Pilih Calon Ketua OSIS</h2>
+                    <h2><?= h($vote_title) ?></h2>
                     <p class="muted">Silahkan pilih salah satu calon di bawah ini. Anda dapat melihat Visi & Misi terlebih dahulu.</p>
                     
                     <div class="grid">

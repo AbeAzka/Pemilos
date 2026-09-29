@@ -4,6 +4,12 @@ require_admin();
 
 $pdo = db();
 
+// Ambil pengaturan Logo & Tampilan dari Database
+$logo1 = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'logo1'")->fetchColumn() ?: '/admin/images/logo1.png';
+$logo2 = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'logo2'")->fetchColumn() ?: '/admin/images/logo2.png';
+$logo3 = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'logo3'")->fetchColumn() ?: '';
+$show_logo3 = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'show_logo3'")->fetchColumn() === '1';
+
 // 1. Ambil parameter filter & pagination
 $type = $_GET['type'] ?? 'all';
 $class_filter = $_GET['class'] ?? 'all';
@@ -183,19 +189,22 @@ $classes = $stmtClasses->fetchAll(PDO::FETCH_COLUMN);
             position: relative;
             z-index: 2;
             border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
+            padding-bottom: 8px;
+            gap: 5px;
         }
         
         .card-header img {
-            height: 35px;
+            height: 32px;
             width: auto;
+            object-fit: contain;
         }
         
         .card-header h3 {
             margin: 0;
-            font-size: 14px;
+            font-size: 12px;
             text-align: center;
             flex-grow: 1;
+            line-height: 1.2;
         }
 
         .card-body {
@@ -204,13 +213,14 @@ $classes = $stmtClasses->fetchAll(PDO::FETCH_COLUMN);
             text-align: center;
         }
 
+        /* Watermark Logo Tengah Transparan */
         .watermark {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            opacity: 0.15;
-            width: 60%;
+            opacity: 0.12; /* Efek transparan */
+            width: 55%;
             z-index: 1;
             pointer-events: none;
         }
@@ -238,6 +248,7 @@ $classes = $stmtClasses->fetchAll(PDO::FETCH_COLUMN);
             <button onclick="window.print()" style="background: #176b37; color: white; margin-left: 10px; width: auto; padding: 10px 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px;">🖨️ Cetak Halaman Aktif</button>
             <a href="admin.php" class="secondary" style="display:inline-block; padding:10px 14px; border-radius:8px; background:#e9eef7; color:#17365f; font-weight:700; text-decoration:none; margin-right:8px; font-size: 14px;">Dashboard</a>
             <form action="admin_logout.php" method="post" style="display:inline; margin: 0;">
+                <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
                 <button class="secondary" style="width: auto; padding: 10px 15px; border-radius: 8px;">Keluar</button>
             </form>
         </div>
@@ -293,29 +304,31 @@ $classes = $stmtClasses->fetchAll(PDO::FETCH_COLUMN);
     <div class="print-container">
         <?php foreach ($voters as $v): ?>
             <div class="voter-card">
-                <!-- Watermark Background -->
-                <img src="/admin/images/watermark.png" class="watermark" alt="watermark">
+                <!-- Watermark Transparan (Logo 3) jika diaktifkan -->
+                <?php if ($show_logo3 && !empty($logo3)): ?>
+                    <img src="..<?= h($logo3) ?>" class="watermark" alt="Watermark Logo">
+                <?php endif; ?>
 
-                <!-- Header Kartu -->
+                <!-- Header Kartu (Logo 1 & Logo 2 di Kiri Kanan) -->
                 <div class="card-header">
-                    <img src="/admin/images/logo1.png" alt="Logo Kiri">
-                    <h3>KARTU PEMILIH <br> Ketua dan Wakil Ketua OSIS Tahun 2026/2027</h3>
-                    <img src="/admin/images/logo2.png" alt="Logo Kanan">
+                    <img src="..<?= h($logo1) ?>" alt="Logo 1">
+                    <h3>KARTU PEMILIH <br> Ketua & Wakil Ketua OSIS</h3>
+                    <img src="..<?= h($logo2) ?>" alt="Logo 2">
                 </div>
                 
                 <!-- Isi Kartu -->
                 <div class="card-body">
-                    <div class="voter-type" style="margin-bottom: 10px; font-weight: bold;"><?= strtoupper($v['voter_type']) ?></div>
+                    <div class="voter-type" style="margin-bottom: 8px; font-weight: bold; font-size: 12px;"><?= strtoupper($v['voter_type']) ?></div>
                     
-                    <div class="details" style="text-align: left;"><strong>Nama</strong> : <?= h($v['student_name'] ?? 'N/A') ?></div>
-                    <div class="details" style="text-align: left;"><strong>Kelas</strong> : <?= h($v['class_name'] ?? '-') ?></div>
+                    <div class="details" style="text-align: left; font-size: 12px;"><strong>Nama</strong> : <?= h($v['name'] ?? $v['student_name'] ?? 'N/A') ?></div>
+                    <div class="details" style="text-align: left; font-size: 12px;"><strong>Kelas</strong> : <?= h($v['class_name'] ?? '-') ?></div>
                     
-                    <hr> 
-                    <div class="details" style="text-align: left;"><strong>Username</strong> : <?= h($v['username'] ?? 'N/A') ?></div>
-                    <div class="details" style="text-align: left;"><strong>Password</strong> : <?= h($v['username']) ?></div>
+                    <hr style="margin: 6px 0;"> 
+                    <div class="details" style="text-align: left; font-size: 12px;"><strong>Username</strong> : <?= h($v['username'] ?? 'N/A') ?></div>
+                    <div class="details" style="text-align: left; font-size: 12px;"><strong>Password</strong> : <?= h($v['username']) ?></div>
                     
-                    <div style="margin-top: 15px; font-size: 10px; color: #666; border-top: 1px solid #eee; padding-top: 5px;">
-                        Simpan kartu ini & gunakan untuk login.
+                    <div style="margin-top: 10px; font-size: 9px; color: #666; border-top: 1px solid #eee; padding-top: 4px;">
+                        Simpan kartu ini & gunakan untuk login pemilihan.
                     </div>
                 </div>
             </div>
