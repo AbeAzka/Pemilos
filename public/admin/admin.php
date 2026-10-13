@@ -4,18 +4,14 @@ require_admin();
 
 $pdo = db();
 
-// Memastikan pengaturan 'print_card' ada di database (Otomatis dibuat jika belum ada)
 $checkPrint = $pdo->query("SELECT COUNT(*) FROM settings WHERE setting_key = 'print_card'")->fetchColumn();
 if ($checkPrint == 0) {
     $pdo->exec("INSERT INTO settings (setting_key, setting_value) VALUES ('print_card', '0')");
 }
 
-// Proses aksi form (Toggle Status Pemilihan & Cetak Kartu)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     check_csrf();
     $action = $_POST['action'] ?? '';
-    
-    // Toggle Status Pemilihan
     if ($action === 'toggle') {
         $new_status = ($_POST['value'] === '1') ? '0' : '1';
         $stmt = $pdo->prepare("UPDATE settings SET setting_value = ? WHERE setting_key = 'election_open'");
@@ -23,13 +19,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Ambil pengaturan sistem
 $open = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'election_open'")->fetchColumn() === '1';
-$print_open = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'print_card'")->fetchColumn() === '1';
-$student_weight = (float) $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'student_weight'")->fetchColumn();
-$teacher_weight = (float) $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'teacher_weight'")->fetchColumn();
+$student_weight = (float) ($pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'weight_student'")->fetchColumn() ?: 60);
+$teacher_weight = (float) ($pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'weight_teacher'")->fetchColumn() ?: 40);
 
-// Statistik Pemilih
 $total = (int) $pdo->query("SELECT COUNT(*) FROM voters")->fetchColumn();
 $student_total = (int) $pdo->query("SELECT COUNT(*) FROM voters WHERE voter_type = 'student'")->fetchColumn();
 $teacher_total = (int) $pdo->query("SELECT COUNT(*) FROM voters WHERE voter_type = 'teacher'")->fetchColumn();
@@ -41,7 +34,6 @@ $teacher_voted = (int) $pdo->query("SELECT COUNT(*) FROM voters WHERE voter_type
 $student_votes = (int) $pdo->query("SELECT COUNT(*) FROM votes WHERE voter_type = 'student'")->fetchColumn();
 $teacher_votes = (int) $pdo->query("SELECT COUNT(*) FROM votes WHERE voter_type = 'teacher'")->fetchColumn();
 
-// Perolehan Suara Kandidat
 $results = $pdo->query("
     SELECT c.id, c.candidate_number, c.name, c.photo_url,
     SUM(CASE WHEN v.voter_type = 'student' THEN 1 ELSE 0 END) AS student_n,
@@ -52,7 +44,6 @@ $results = $pdo->query("
     ORDER BY c.candidate_number
 ")->fetchAll();
 
-// Hitung persentase dan bobot akhir
 foreach ($results as &$r) {
     $r['student_pct'] = $student_votes ? ($r['student_n'] / $student_votes * 100) : 0;
     $r['teacher_pct'] = $teacher_votes ? ($r['teacher_n'] / $teacher_votes * 100) : 0;
@@ -66,198 +57,157 @@ unset($r);
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="refresh" content="5">
-    <title>Dashboard Admin</title>
-    <link rel="stylesheet" href="../style.css">
+    <title>Dashboard Admin - <?= h(APP_NAME) ?></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 700;
-        }
-        .status-badge.open {
-            background: #edf9f0;
-            color: #176b37;
-        }
-        .status-badge.closed {
-            background: #fff0f0;
-            color: #a51d2d;
-        }
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-        .open .status-dot { background: #176b37; }
-        .closed .status-dot { background: #a51d2d; }
-        
-        /* Grid responsif untuk area kontrol atas */
-        .controls-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 16px;
-            margin-bottom: 18px;
-        }
-        .controls-grid .card {
-            margin-bottom: 0;
-        }
-
-        /* --- CSS Khusus Menu Navigasi (Header) --- */
-        header {
-            background: #123b73;
-            color: #fff;
-            padding: 16px 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap; /* Mengizinkan elemen turun ke baris baru di layar kecil */
-            gap: 15px;
-        }
-        .header-brand {
-            flex-shrink: 0;
-        }
-        .header-nav {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap; /* Jika layar sangat kecil, menu akan turun rapi */
-        }
-        .nav-link {
-            padding: 9px 14px; 
-            border-radius: 8px; 
-            background: #e9eef7; 
-            color: #17365f; 
-            font-weight: 700; 
-            text-decoration: none; 
-            font-size: 13px;
-            transition: all 0.2s;
-            white-space: nowrap; /* Mencegah teks menu patah ke bawah */
-        }
-        .nav-link:hover {
-            background: #d0daeb;
-        }
-        .nav-btn-logout {
-            padding: 9px 14px;
-            border-radius: 8px;
-            background: #a51d2d; /* Warna merah agar kontras */
-            color: white;
-            font-weight: 700;
-            border: none;
-            cursor: pointer;
-            font-size: 13px;
-            transition: background 0.2s;
-        }
-        .nav-btn-logout:hover {
-            background: #8b1826;
-        }
-        /* ------------------------------------------ */
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1e293b; min-height: 100vh; display: flex; flex-direction: column; }
+        .card { background: #fff; border: 1px solid rgba(226, 232, 240, 0.8); border-radius: 1rem; }
+        .progress { height: 10px; border-radius: 5px; background-color: #e2e8f0; }
+        .progress-bar { background-color: #4f46e5; }
     </style>
 </head>
-<body>
-    <header>
-        <div class="header-brand">
-            <div class="brand"><?= h(APP_NAME) ?> — DASHBOARD</div>
-            <div class="sub">Panitia Pemilihan</div>
+<body class="d-flex flex-column min-vh-100">
+
+    <header class="w-100 py-3 px-4 px-md-5 d-flex align-items-center justify-content-between border-bottom bg-white shadow-sm flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <div class="text-white rounded-3 p-2 d-flex align-items-center justify-content-center shadow-sm" style="width: 45px; height: 45px; background-color: #4f46e5;">
+                <i class="fa-solid fa-gauge fs-5"></i>
+            </div>
+            <div>
+                <h1 class="h6 mb-0 fw-bold text-dark"><?= h(APP_NAME) ?> — DASHBOARD</h1>
+                <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.7rem;">Panitia Pemilihan</small>
+            </div>
         </div>
         
-        <!-- Navigasi Menu Admin -->
-        <nav class="header-nav">
-           
-            <a href="admin_add_voter.php" class="nav-link">Tambah Pemilih</a>
-            <a href="admin_voters.php" class="nav-link">Status Pemilih</a>
-            
-            <a href="admin_candidates.php" class="nav-link">Kelola Paslon</a>
-			<a href="admin_cetak.php" class="nav-link">Cetak Kartu</a>
-			<a href="rekap_hasil.php" class="nav-link">Rekap Hasil</a>
-			<a href="settings.php" class="nav-link">Pengaturan</a>
-            <form action="admin_logout.php" method="post" style="margin: 0;">
+        <nav class="d-flex align-items-center gap-2 flex-wrap">
+            <a href="admin_add_voter.php" class="btn btn-light btn-sm fw-semibold border">Tambah Pemilih</a>
+            <a href="admin_voters.php" class="btn btn-light btn-sm fw-semibold border">Status Pemilih</a>
+            <a href="admin_candidates.php" class="btn btn-light btn-sm fw-semibold border">Kelola Paslon</a>
+            <a href="admin_cetak.php" class="btn btn-light btn-sm fw-semibold border">Cetak Kartu</a>
+            <a href="rekap_hasil.php" class="btn btn-light btn-sm fw-semibold border">Rekap Hasil</a>
+            <a href="settings.php" class="btn btn-light btn-sm fw-semibold border text-primary"><i class="fa-solid fa-gear"></i> Pengaturan</a>
+            <form action="admin_logout.php" method="post" class="m-0">
                 <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
-                <button type="submit" class="nav-btn-logout">Keluar</button>
+                <button type="submit" class="btn btn-danger btn-sm fw-semibold">Keluar</button>
             </form>
         </nav>
     </header>
     
-    <main>
-        <!-- Area Pengaturan (Status Pemilihan & Cetak Kartu) -->
-        <div class="controls-grid">
-            <!-- Status Pemilihan -->
-            <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+    <main class="flex-grow-1 p-3 p-md-5">
+        <div class="w-100 mx-auto" style="max-width: 1100px;">
+            
+            <!-- Kontrol Status Pemilihan -->
+            <div class="card p-4 mb-4 shadow-sm d-flex flex-row justify-content-between align-items-center flex-wrap gap-3">
                 <div>
-                    <h2 style="margin-bottom: 8px; font-size: 18px;">Status Pemilihan</h2>
-                    <div class="status-badge <?= $open ? 'open' : 'closed' ?>">
-                        <span class="status-dot"></span>
-                        <span><?= $open ? 'DIBUKA' : 'DITUTUP' ?></span>
-                    </div>
+                    <h2 class="h5 fw-bold text-dark mb-1">Status Pemilihan</h2>
+                    <span class="badge <?= $open ? 'bg-success' : 'bg-danger' ?> bg-opacity-10 text-<?= $open ? 'success' : 'danger' ?> border border-<?= $open ? 'success' : 'danger' ?> border-opacity-25 px-3 py-2">
+                        <i class="fa-solid fa-circle me-1" style="font-size: 6px;"></i> <?= $open ? 'DIBUKA' : 'DITUTUP' ?>
+                    </span>
                 </div>
-                <form method="post" style="margin: 0;">
+                <form method="post" class="m-0">
                     <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
                     <input type="hidden" name="action" value="toggle">
                     <input type="hidden" name="value" value="<?= $open ? '1' : '0' ?>">
-                    <button style="width: auto; padding: 10px 16px; background: <?= $open ? '#a51d2d' : '#1769e0' ?>; font-size: 14px;">
+                    <button type="submit" class="btn <?= $open ? 'btn-danger' : 'btn-primary' ?> px-4 fw-semibold shadow-sm">
                         <?= $open ? 'Tutup Pemilihan' : 'Buka Pemilihan' ?>
                     </button>
                 </form>
             </div>
-        </div>
 
-        <!-- Statistik Pemilih -->
-        <div class="row">
-            <div class="stat">Total Pemilih<b><?= $total ?></b></div>
-            <div class="stat">Siswa<b><?= $student_total ?></b></div>
-            <div class="stat">Guru<b><?= $teacher_total ?></b></div>
-            <div class="stat">Sudah Memilih<b><?= $voted ?></b></div>
-        </div>
-
-        <!-- Komposisi Suara -->
-        <div class="card">
-            <h2>Komposisi Suara</h2>
-            <p class="muted">Bobot hasil akhir dihitung berdasarkan persentase: <b>Siswa <?= $student_weight ?>%</b> + <b>Guru <?= $teacher_weight ?>%</b>.</p>
-            <div class="row" style="margin-top: 15px;">
-                <div class="stat" style="background: #f7f9fc;">
-                    Suara siswa<b><?= $student_votes ?></b>
-                    <small><?= $student_voted ?> pemilih siswa sudah memilih</small>
-                </div>
-                <div class="stat" style="background: #f7f9fc;">
-                    Suara guru<b><?= $teacher_votes ?></b>
-                    <small><?= $teacher_voted ?> pemilih guru sudah memilih</small>
-                </div>
-            </div>
-        </div>
-
-        <!-- Perolehan Suara Berbobot -->
-        <div class="card">
-            <h2>Perolehan Suara Berbobot</h2>
-            <?php foreach ($results as $r): ?>
-                <div style="margin: 22px 0; padding-bottom: 15px; border-bottom: 1px solid #f0f3f8;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <b><?= sprintf('%02d', $r['candidate_number']) ?> — <?= h($r['name']) ?></b>
-                    </div>
-                    <div class="result-grid">
-                        <div><span>Suara siswa</span><strong><?= (int)$r['student_n'] ?> (<?= number_format($r['student_pct'], 2) ?>%)</strong></div>
-                        <div><span>Suara guru</span><strong><?= (int)$r['teacher_n'] ?> (<?= number_format($r['teacher_pct'], 2) ?>%)</strong></div>
-                        <div><span>Hasil akhir</span><strong style="color: #1769e0;"><?= number_format($r['weighted'], 2) ?>%</strong></div>
-                    </div>
-                    <div class="bar">
-                        <div class="fill" style="width: <?= min(100, max(0, $r['weighted'])) ?>%"></div>
+            <!-- Statistik Pemilih -->
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-md-3">
+                    <div class="card p-3 shadow-sm text-center">
+                        <small class="text-muted uppercase fw-bold" style="font-size: 0.75rem;">Total Pemilih</small>
+                        <span class="fs-4 fw-bold text-dark mt-1"><?= $total ?></span>
                     </div>
                 </div>
-            <?php endforeach; ?>
-        </div>
+                <div class="col-6 col-md-3">
+                    <div class="card p-3 shadow-sm text-center">
+                        <small class="text-muted uppercase fw-bold" style="font-size: 0.75rem;">Siswa</small>
+                        <span class="fs-4 fw-bold text-dark mt-1"><?= $student_total ?></span>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card p-3 shadow-sm text-center">
+                        <small class="text-muted uppercase fw-bold" style="font-size: 0.75rem;">Guru</small>
+                        <span class="fs-4 fw-bold text-dark mt-1"><?= $teacher_total ?></span>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card p-3 shadow-sm text-center">
+                        <small class="text-muted uppercase fw-bold" style="font-size: 0.75rem;">Sudah Memilih</small>
+                        <span class="fs-4 fw-bold text-success mt-1"><?= $voted ?></span>
+                    </div>
+                </div>
+            </div>
 
-        <!-- Catatan Privasi & Link Live Result -->
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 18px;" class="grid-responsive">
-            <div class="card" style="margin-bottom: 0;">
-                <h2 style="font-size: 16px;">Catatan Privasi</h2>
-                <p class="muted" style="margin: 0; font-size: 13px;">Tabel <code>votes</code> tidak menyimpan ID pemilih. Sistem hanya mencatat kategori pemilih (siswa/guru) untuk perhitungan bobot, sedangkan status keikutsertaan berada terpisah di tabel <code>voters</code>.</p>
+            <!-- Komposisi Suara -->
+            <div class="card p-4 shadow-sm mb-4">
+                <h2 class="h5 fw-bold text-dark mb-1">Komposisi Suara</h2>
+                <p class="text-muted small mb-3">Bobot hasil akhir dihitung berdasarkan persentase: <b>Siswa <?= $student_weight ?>%</b> + <b>Guru <?= $teacher_weight ?>%</b>.</p>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <span class="d-block text-secondary small">Suara Siswa</span>
+                            <strong class="fs-4 text-dark"><?= $student_votes ?></strong>
+                            <small class="d-text text-muted d-block mt-1"><?= $student_voted ?> pemilih siswa sudah memilih</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <span class="d-block text-secondary small">Suara Guru</span>
+                            <strong class="fs-4 text-dark"><?= $teacher_votes ?></strong>
+                            <small class="d-text text-muted d-block mt-1"><?= $teacher_voted ?> pemilih guru sudah memilih</small>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: #123b73;">
-                <a href="../live.php" target="_blank" style="color: #fff; font-weight: bold; text-decoration: none; display: block;">Buka Live Result untuk Videotron →</a>
-                <small style="color: rgba(255,255,255,0.7); margin-top: 4px;">Tampilan layar besar</small>
+
+            <!-- Perolehan Suara Berbobot -->
+            <div class="card p-4 shadow-sm mb-4">
+                <h2 class="h5 fw-bold text-dark mb-4">Perolehan Suara Berbobot</h2>
+                <?php foreach ($results as $r): ?>
+                    <div class="mb-4 pb-3 border-bottom">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold text-dark"><?= sprintf('%02d', $r['candidate_number']) ?> — <?= h($r['name']) ?></span>
+                        </div>
+                        <div class="row text-muted small mb-2">
+                            <div class="col-4">Suara siswa: <strong class="text-dark"><?= (int)$r['student_n'] ?> (<?= number_format($r['student_pct'], 2) ?>%)</strong></div>
+                            <div class="col-4">Suara guru: <strong class="text-dark"><?= (int)$r['teacher_n'] ?> (<?= number_format($r['teacher_pct'], 2) ?>%)</strong></div>
+                            <div class="col-4 text-end">Hasil akhir: <strong class="text-primary fs-6"><?= number_format($r['weighted'], 2) ?>%</strong></div>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar" style="width: <?= min(100, max(0, $r['weighted'])) ?>%"></div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
             </div>
+
+            <!-- Catatan Privasi & Link Live Result -->
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <div class="card p-4 shadow-sm h-100">
+                        <h2 class="h6 fw-bold text-dark mb-2">Catatan Privasi</h2>
+                        <p class="text-muted small mb-0">Tabel <code>votes</code> tidak menyimpan ID pemilih. Sistem hanya mencatat kategori pemilih (siswa/guru) untuk perhitungan bobot, sedangkan status keikutsertaan berada terpisah di tabel <code>voters</code>.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card p-4 shadow-sm text-center d-flex flex-column justify-content-center align-items-center text-white h-100" style="background: #4f46e5;">
+                        <a href="../live.php" target="_blank" class="text-white fw-bold text-decoration-none">Buka Live Result untuk Videotron →</a>
+                        <small class="text-white-50 mt-1" style="font-size: 0.75rem;">Tampilan layar besar</small>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </main>
+
+    <footer class="w-100 py-4 text-center text-muted small border-top bg-white">
+        &copy; <?= date('Y') ?> <?= h(APP_NAME) ?> & INDODEV STUDIO. Hak Cipta Dilindungi.
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

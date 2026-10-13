@@ -4,18 +4,17 @@ require_admin();
 
 $pdo = db();
 
-// Ambil pengaturan Logo & Tampilan dari Database
+// Ambil pengaturan Logo & Tampilan dari Database[cite: 1]
 $logo1 = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'logo1'")->fetchColumn() ?: '/admin/images/logo1.png';
 $logo2 = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'logo2'")->fetchColumn() ?: '/admin/images/logo2.png';
 $logo3 = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'logo3'")->fetchColumn() ?: '';
 $show_logo3 = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'show_logo3'")->fetchColumn() === '1';
 
-// 1. Ambil parameter filter & pagination
+// 1. Ambil parameter filter & pagination (Default per_page diubah ke 'all' agar awal halaman tampil semua)
 $type = $_GET['type'] ?? 'all';
 $class_filter = $_GET['class'] ?? 'all';
-$per_page_input = $_GET['per_page'] ?? '21';
+$per_page_input = $_GET['per_page'] ?? 'all';
 
-// Jika 'all', set limit besar atau ambil semua; jika angka, gunakan sebagai limit
 $is_all_pages = ($per_page_input === 'all');
 $limit = $is_all_pages ? PHP_INT_MAX : (int)$per_page_input;
 if ($limit <= 0) $limit = 21;
@@ -71,10 +70,24 @@ $classes = $stmtClasses->fetchAll(PDO::FETCH_COLUMN);
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Cetak Kartu Pemilih</title>
-    <link rel="stylesheet" href="../style.css">
+    <title>Cetak Kartu Pemilih - <?= h(APP_NAME) ?></title>
+    <!-- Bootstrap 5 CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome CDN untuk ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* CSS Pagination */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- CSS Pagination --- */
         .pagination {
             display: flex;
             gap: 6px;
@@ -98,9 +111,9 @@ $classes = $stmtClasses->fetchAll(PDO::FETCH_COLUMN);
             background: #e9eef7;
         }
         .pagination .active {
-            background: #1769e0;
+            background: #4f46e5;
             color: #fff;
-            border-color: #1769e0;
+            border-color: #4f46e5;
         }
         .pagination .disabled {
             color: #a0aec0;
@@ -109,76 +122,22 @@ $classes = $stmtClasses->fetchAll(PDO::FETCH_COLUMN);
             border-color: #e2e8f0;
         }
 
-        /* --- UI FILTER BAR MODERN --- */
-        .filter-bar-modern {
-            background: #ffffff;
-            padding: 20px 30px;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-            margin-bottom: 20px;
+        /* --- STYLE KARTU PEMILIH ASLI / KLASIK --- */
+        .print-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
         }
 
-        .filter-form-group {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        .filter-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .filter-item label {
-            font-weight: 600;
-            color: #4a5568;
-            font-size: 14px;
-        }
-
-        .custom-select {
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid #cbd5e0;
-            background-color: #f8fafc;
-            color: #2d3748;
-            font-size: 14px;
-            font-weight: 500;
-            outline: none;
-            cursor: pointer;
-            transition: all 0.2s;
-            min-width: 130px;
-        }
-
-        .custom-select:hover {
-            border-color: #a0aec0;
-        }
-
-        .custom-select:focus {
-            border-color: #1769e0;
-            box-shadow: 0 0 0 2px rgba(23, 105, 224, 0.2);
-            background-color: #ffffff;
-        }
-        
-        .filter-stats {
-            color: #718096;
-            font-size: 13px;
-            margin-top: 5px;
-        }
-        
-        .filter-stats b {
-            color: #2d3748;
-        }
-
-        /* --- CSS DESAIN KARTU --- */
         .voter-card {
             position: relative;
             overflow: hidden;
             background-color: #ffffff;
+            border: 1px solid #cbd5e0;
+            border-radius: 10px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            page-break-inside: avoid;
         }
         
         .card-header {
@@ -219,7 +178,7 @@ $classes = $stmtClasses->fetchAll(PDO::FETCH_COLUMN);
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            opacity: 0.12; /* Efek transparan */
+            opacity: 0.12;
             width: 55%;
             z-index: 1;
             pointer-events: none;
@@ -230,152 +189,182 @@ $classes = $stmtClasses->fetchAll(PDO::FETCH_COLUMN);
             .no-print, .pagination { 
                 display: none !important; 
             }
+            body {
+                background: #fff !important;
+            }
+            .print-container {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
             .voter-card {
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
+                border: 1px solid #000 !important;
+                box-shadow: none !important;
+                break-inside: avoid;
             }
         }
     </style>
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
 
-    <header class="no-print">
-        <div>
-            <div class="brand"><?= h(APP_NAME) ?> — CETAK KARTU PEMILIH</div>
-            <div class="sub">Panitia Pemilihan</div>
+    <!-- Header / Nav Gaya Bootstrap Light -->
+    <header class="no-print w-100 py-3 px-4 px-md-5 d-flex align-items-center justify-content-between border-bottom bg-white shadow-sm">
+        <div class="d-flex align-items-center gap-3">
+            <div class="text-white rounded-3 p-2 d-flex align-items-center justify-content-center shadow-sm" style="width: 45px; height: 45px; background-color: #4f46e5;">
+                <i class="fa-solid fa-id-card fs-5"></i>
+            </div>
+            <div>
+                <h1 class="h6 mb-0 fw-bold text-dark"><?= h(APP_NAME) ?> — CETAK KARTU</h1>
+                <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.7rem;">Kartu Akun Pemilih</small>
+            </div>
         </div>
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <button onclick="window.print()" style="background: #176b37; color: white; margin-left: 10px; width: auto; padding: 10px 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px;">🖨️ Cetak Halaman Aktif</button>
-            <a href="admin.php" class="secondary" style="display:inline-block; padding:10px 14px; border-radius:8px; background:#e9eef7; color:#17365f; font-weight:700; text-decoration:none; margin-right:8px; font-size: 14px;">Dashboard</a>
-            <form action="admin_logout.php" method="post" style="display:inline; margin: 0;">
+        <div class="d-flex align-items-center gap-2">
+            <button onclick="window.print()" class="btn btn-success btn-sm px-3 fw-semibold"><i class="fa-solid fa-print me-1"></i> Cetak Kartu</button>
+            <a href="admin.php" class="btn btn-outline-secondary btn-sm px-3 fw-semibold">Dashboard</a>
+            <form action="admin_logout.php" method="post" class="m-0">
                 <input type="hidden" name="csrf" value="<?= h(csrf()) ?>">
-                <button class="secondary" style="width: auto; padding: 10px 15px; border-radius: 8px;">Keluar</button>
+                <button type="submit" class="btn btn-danger btn-sm px-3 fw-semibold">Keluar</button>
             </form>
         </div>
     </header>
 
-    <!-- UI Filter & Opsi Tampilan -->
-    <div class="no-print filter-bar-modern">
-        <form method="GET" action="" id="filterForm" class="filter-form-group">
-            <div class="filter-item">
-                <label for="type">Kategori :</label>
-                <select name="type" id="type" onchange="document.getElementById('filterForm').submit()" class="custom-select">
-                    <option value="all" <?= $type === 'all' ? 'selected' : '' ?>>Semua Tipe</option>
-                    <option value="student" <?= $type === 'student' ? 'selected' : '' ?>>Siswa</option>
-                    <option value="teacher" <?= $type === 'teacher' ? 'selected' : '' ?>>Guru</option>
-                </select>
-            </div>
-
-            <div class="filter-item">
-                <label for="class">Kelas :</label>
-                <select name="class" id="class" onchange="document.getElementById('filterForm').submit()" class="custom-select">
-                    <option value="all">Semua Kelas</option>
-                    <?php foreach ($classes as $c): ?>
-                        <option value="<?= h($c) ?>" <?= $class_filter === $c ? 'selected' : '' ?>><?= h($c) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-
-            <div class="filter-item">
-                <label for="per_page">Per Halaman :</label>
-                <select name="per_page" id="per_page" onchange="document.getElementById('filterForm').submit()" class="custom-select">
-                    <option value="21" <?= $per_page_input === '21' ? 'selected' : '' ?>>21 Kartu</option>
-                    <option value="30" <?= $per_page_input === '30' ? 'selected' : '' ?>>30 Kartu</option>
-                    <option value="50" <?= $per_page_input === '50' ? 'selected' : '' ?>>50 Kartu</option>
-                    <option value="all" <?= $per_page_input === 'all' ? 'selected' : '' ?>>Semua Data</option>
-                </select>
-            </div>
+    <!-- Main Content -->
+    <main class="flex-grow-1 p-3 p-md-5">
+        <div class="w-100 mx-auto" style="max-width: 1200px;">
             
-            <?php if($type !== 'all' || $class_filter !== 'all' || $per_page_input !== '21'): ?>
-                <a href="?" style="font-size: 13px; color: #e53e3e; text-decoration: none; padding: 6px 12px; border-radius: 6px; background: #fff5f5; border: 1px solid #fed7d7; font-weight: 600;">✖ Reset Filter</a>
-            <?php endif; ?>
-        </form>
-        
-        <div class="filter-stats">
-            <?php if ($is_all_pages): ?>
-                Menampilkan <b>seluruh data</b> sekaligus (Total <b><?= $total_data ?></b> kartu pemilih)
-            <?php else: ?>
-                Menampilkan halaman <b><?= $page ?></b> dari <b><?= $total_pages ?></b> (Total <b><?= $total_data ?></b> kartu pemilih)
-            <?php endif; ?>
-        </div>
-    </div>
-
-    <!-- Area Kartu Pemilih -->
-    <div class="print-container">
-        <?php foreach ($voters as $v): ?>
-            <div class="voter-card">
-                <!-- Watermark Transparan (Logo 3) jika diaktifkan -->
-                <?php if ($show_logo3 && !empty($logo3)): ?>
-                    <img src="..<?= h($logo3) ?>" class="watermark" alt="Watermark Logo">
-                <?php endif; ?>
-
-                <!-- Header Kartu (Logo 1 & Logo 2 di Kiri Kanan) -->
-                <div class="card-header">
-                    <img src="..<?= h($logo1) ?>" alt="Logo 1">
-                    <h3>KARTU PEMILIH <br> Ketua & Wakil Ketua OSIS</h3>
-                    <img src="..<?= h($logo2) ?>" alt="Logo 2">
-                </div>
-                
-                <!-- Isi Kartu -->
-                <div class="card-body">
-                    <div class="voter-type" style="margin-bottom: 8px; font-weight: bold; font-size: 12px;"><?= strtoupper($v['voter_type']) ?></div>
-                    
-                    <div class="details" style="text-align: left; font-size: 12px;"><strong>Nama</strong> : <?= h($v['name'] ?? $v['student_name'] ?? 'N/A') ?></div>
-                    <div class="details" style="text-align: left; font-size: 12px;"><strong>Kelas</strong> : <?= h($v['class_name'] ?? '-') ?></div>
-                    
-                    <hr style="margin: 6px 0;"> 
-                    <div class="details" style="text-align: left; font-size: 12px;"><strong>Username</strong> : <?= h($v['username'] ?? 'N/A') ?></div>
-                    <div class="details" style="text-align: left; font-size: 12px;"><strong>Password</strong> : <?= h($v['username']) ?></div>
-                    
-                    <div style="margin-top: 10px; font-size: 9px; color: #666; border-top: 1px solid #eee; padding-top: 4px;">
-                        Simpan kartu ini & gunakan untuk login pemilihan.
+            <!-- UI Filter Bar Modern -->
+            <div class="no-print card p-4 shadow-sm mb-4 border-0 rounded-4 bg-white">
+                <form method="GET" action="" id="filterForm" class="row g-3 align-items-center">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-secondary">Kategori :</label>
+                        <select name="type" id="type" onchange="document.getElementById('filterForm').submit()" class="form-select">
+                            <option value="all" <?= $type === 'all' ? 'selected' : '' ?>>Semua Tipe</option>
+                            <option value="student" <?= $type === 'student' ? 'selected' : '' ?>>Siswa</option>
+                            <option value="teacher" <?= $type === 'teacher' ? 'selected' : '' ?>>Guru</option>
+                        </select>
                     </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-secondary">Kelas :</label>
+                        <select name="class" id="class" onchange="document.getElementById('filterForm').submit()" class="form-select">
+                            <option value="all">Semua Kelas</option>
+                            <?php foreach ($classes as $c): ?>
+                                <option value="<?= h($c) ?>" <?= $class_filter === $c ? 'selected' : '' ?>><?= h($c) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-secondary">Tampilkan :</label>
+                        <select name="per_page" id="per_page" onchange="document.getElementById('filterForm').submit()" class="form-select">
+                            <option value="all" <?= $per_page_input === 'all' ? 'selected' : '' ?>>Semua Data (Tampil Semua)</option>
+                            <option value="21" <?= $per_page_input === '21' ? 'selected' : '' ?>>21 Kartu</option>
+                            <option value="30" <?= $per_page_input === '30' ? 'selected' : '' ?>>30 Kartu</option>
+                            <option value="50" <?= $per_page_input === '50' ? 'selected' : '' ?>>50 Kartu</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 d-flex align-items-end mt-4">
+                        <?php if($type !== 'all' || $class_filter !== 'all' || $per_page_input !== 'all'): ?>
+                            <a href="?" class="btn btn-outline-danger btn-sm w-100 fw-semibold">Reset Filter</a>
+                        <?php endif; ?>
+                    </div>
+                </form>
+                
+                <div class="mt-3 text-muted small">
+                    <?php if ($is_all_pages): ?>
+                        Menampilkan <b>seluruh data</b> sekaligus (Total <b><?= $total_data ?></b> kartu pemilih)
+                    <?php else: ?>
+                        Menampilkan halaman <b><?= $page ?></b> dari <b><?= $total_pages ?></b> (Total <b><?= $total_data ?></b> kartu pemilih)
+                    <?php endif; ?>
                 </div>
             </div>
-        <?php endforeach; ?>
-        
-        <?php if (empty($voters)): ?>
-            <p style="text-align:center; grid-column: 1 / -1; padding: 40px; background: #fff; border-radius: 10px; color: #718096; font-size: 16px;">
-                TIDAK ADA DATA PEMILIH DITEMUKAN.<br>
-                <small>Silakan ubah filter pencarian Anda.</small>
-            </p>
-        <?php endif; ?>
-    </div>
 
-    <!-- Kontrol Pagination -->
-    <?php if (!$is_all_pages && $total_pages > 1): ?>
-        <div class="pagination no-print">
-            <!-- Tombol Prev -->
-            <?php if ($page > 1): ?>
-                <a href="?type=<?= urlencode($type) ?>&class=<?= urlencode($class_filter) ?>&per_page=<?= urlencode($per_page_input) ?>&page=<?= $page - 1 ?>">&laquo; Prev</a>
-            <?php else: ?>
-                <span class="disabled">&laquo; Prev</span>
+            <!-- Area Kartu Pemilih -->
+            <div class="print-container">
+                <?php foreach ($voters as $v): ?>
+                    <div class="voter-card">
+                        <!-- Watermark Transparan (Logo 3) jika diaktifkan -->
+                        <?php if ($show_logo3 && !empty($logo3)): ?>
+                            <img src="..<?= h($logo3) ?>" class="watermark" alt="Watermark Logo">
+                        <?php endif; ?>
+
+                        <!-- Header Kartu (Logo 1 & Logo 2 di Kiri Kanan) -->
+                        <div class="card-header">
+                            <img src="..<?= h($logo1) ?>" alt="Logo 1">
+                            <h3>KARTU PEMILIH <br> Ketua & Wakil Ketua OSIS</h3>
+                            <img src="..<?= h($logo2) ?>" alt="Logo 2">
+                        </div>
+                        
+                        <!-- Isi Kartu -->
+                        <div class="card-body">
+                            <div class="voter-type mb-2 fw-bold" style="font-size: 11px;"><?= strtoupper($v['voter_type']) ?></div>
+                            
+                            <div class="details text-start" style="font-size: 12px;"><strong>Nama</strong> : <?= h($v['name'] ?? $v['student_name'] ?? 'N/A') ?></div>
+                            <div class="details text-start" style="font-size: 12px;"><strong>Kelas</strong> : <?= h($v['class_name'] ?? '-') ?></div>
+                            
+                            <hr class="my-2"> 
+                            <div class="details text-start" style="font-size: 12px;"><strong>Username</strong> : <?= h($v['username'] ?? 'N/A') ?></div>
+                            <div class="details text-start" style="font-size: 12px;"><strong>Password</strong> : <?= h($v['username']) ?></div>
+                            
+                            <div class="mt-2 text-muted" style="font-size: 9px; border-top: 1px solid #eee; padding-top: 4px;">
+                                Simpan kartu ini & gunakan untuk login pemilihan.
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+                
+                <?php if (empty($voters)): ?>
+                    <div class="col-12 text-center py-5 bg-white rounded-4 shadow-sm text-muted">
+                        TIDAK ADA DATA PEMILIH DITEMUKAN.<br>
+                        <small>Silakan ubah filter pencarian Anda.</small>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Kontrol Pagination -->
+            <?php if (!$is_all_pages && $total_pages > 1): ?>
+                <div class="pagination no-print">
+                    <?php if ($page > 1): ?>
+                        <a href="?type=<?= urlencode($type) ?>&class=<?= urlencode($class_filter) ?>&per_page=<?= urlencode($per_page_input) ?>&page=<?= $page - 1 ?>">&laquo; Prev</a>
+                    <?php else: ?>
+                        <span class="disabled">&laquo; Prev</span>
+                    <?php endif; ?>
+
+                    <?php
+                    $start_page = max(1, $page - 2);
+                    $end_page = min($total_pages, $page + 2);
+                    
+                    if ($start_page > 1) echo '<span>...</span>';
+
+                    for ($i = $start_page; $i <= $end_page; $i++): ?>
+                        <a href="?type=<?= urlencode($type) ?>&class=<?= urlencode($class_filter) ?>&per_page=<?= urlencode($per_page_input) ?>&page=<?= $i ?>" class="<?= $i === $page ? 'active' : '' ?>">
+                            <?= $i ?>
+                        </a>
+                    <?php endfor; 
+                    
+                    if ($end_page < $total_pages) echo '<span>...</span>';
+                    ?>
+
+                    <?php if ($page < $total_pages): ?>
+                        <a href="?type=<?= urlencode($type) ?>&class=<?= urlencode($class_filter) ?>&per_page=<?= urlencode($per_page_input) ?>&page=<?= $page + 1 ?>">Next &raquo;</a>
+                    <?php else: ?>
+                        <span class="disabled">Next &raquo;</span>
+                    <?php endif; ?>
+                </div>
             <?php endif; ?>
 
-            <!-- Angka Halaman -->
-            <?php
-            $start_page = max(1, $page - 2);
-            $end_page = min($total_pages, $page + 2);
-            
-            if ($start_page > 1) echo '<span>...</span>';
-
-            for ($i = $start_page; $i <= $end_page; $i++): ?>
-                <a href="?type=<?= urlencode($type) ?>&class=<?= urlencode($class_filter) ?>&per_page=<?= urlencode($per_page_input) ?>&page=<?= $i ?>" class="<?= $i === $page ? 'active' : '' ?>">
-                    <?= $i ?>
-                </a>
-            <?php endfor; 
-            
-            if ($end_page < $total_pages) echo '<span>...</span>';
-            ?>
-
-            <!-- Tombol Next -->
-            <?php if ($page < $total_pages): ?>
-                <a href="?type=<?= urlencode($type) ?>&class=<?= urlencode($class_filter) ?>&per_page=<?= urlencode($per_page_input) ?>&page=<?= $page + 1 ?>">Next &raquo;</a>
-            <?php else: ?>
-                <span class="disabled">Next &raquo;</span>
-            <?php endif; ?>
         </div>
-    <?php endif; ?>
+    </main>
 
+    <!-- Footer -->
+    <footer class="no-print w-100 py-4 text-center text-muted small border-top bg-white">
+        &copy; <?= date('Y') ?> <?= h(APP_NAME) ?> & INDODEV STUDIO. Hak Cipta Dilindungi.
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
